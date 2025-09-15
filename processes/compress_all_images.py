@@ -1,12 +1,12 @@
 # Đường dẫn: excel_toolkit/processes/compress_all_images.py
-# Phiên bản 2.1 - Cập nhật để nhận tham số chất lượng
+# Phiên bản 3.0 - Cập nhật để tương thích với cấu trúc engine mới
 # Ngày cập nhật: 2025-09-15
 
 import logging
 import os
 from excel_controller import ExcelController
 
-def run(controller, file_path, engine='xlwings', quality=220):
+def run(controller, file_path, engine='pil', quality=70):
     """
     Quy trình nén tất cả hình ảnh trong workbook, cho phép chọn engine và thông số chất lượng.
     """
