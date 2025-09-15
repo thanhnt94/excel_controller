@@ -1,0 +1,132 @@
+# Đường dẫn: excel_toolkit/localization.py
+# Phiên bản 2.4 - Bổ sung khóa dịch cho các tùy chọn nén ảnh
+# Ngày cập nhật: 2025-09-15
+
+class Translator:
+    def __init__(self):
+        self.language_data = {
+            "vi": {
+                "window_title": "Bộ công cụ Excel",
+                "browse_placeholder": "Chọn một thư mục chứa file Excel...",
+                "browse_button": "Duyệt...",
+                "select_all": "Chọn tất cả",
+                "deselect_all": "Bỏ chọn tất cả",
+                "save_options_label": "Tùy chọn lưu:",
+                "save_overwrite": "Ghi đè file gốc",
+                "save_backup": "Sao lưu file gốc (thêm _origin)",
+                "save_prefix": "Thêm tiền tố...",
+                "save_suffix": "Thêm hậu tố...",
+                "save_output_folder": "Lưu vào thư mục khác",
+                "output_folder_placeholder": "Chọn thư mục đích...",
+                "affix_placeholder": "Nhập tiền tố / hậu tố...",
+                "file_list_label": "Danh sách file Excel tìm thấy",
+                "run_button": "Chạy tác vụ đã chọn",
+                "language_label": "Ngôn ngữ:",
+                "tasks_dialog_title": "Chọn tác vụ",
+                "tasks_dialog_label": "Vui lòng chọn các tác vụ để chạy:",
+                "task_add_label": "Dán nhãn (Add Label)",
+                "task_delete_hidden_sheets": "Xóa sheet ẩn (An toàn)",
+                "task_delete_external_links": "Xóa liên kết ngoài",
+                "task_delete_defined_names": "Xóa Defined Names (An toàn)",
+                "task_set_print_settings": "Thiết lập trang in (A3, Ngang)",
+                "task_clear_excess_cell_formatting": "Dọn dẹp định dạng ô thừa",
+                "task_compress_all_images": "Nén tất cả hình ảnh",
+                "task_refresh_and_clean_pivot_caches": "Dọn dẹp Pivot Table caches",
+                "task_compress_all_images_engine_label": "Engine nén ảnh:",
+                "engine_xlwings": "xlwings",
+                "engine_spire": "Spire.Xls",
+                "image_max_size_kb": "Kích thước tối đa (KB)",
+                "run_button_dialog": "Chạy",
+                "cancel_button_dialog": "Hủy",
+                "log_level_label": "Mức độ Log:",
+                "log_level_info": "Thông tin (Info)",
+                "log_level_debug": "Gỡ lỗi (Debug)",
+            },
+            "en": {
+                "window_title": "Excel Toolkit",
+                "browse_placeholder": "Select a folder containing Excel files...",
+                "browse_button": "Browse...",
+                "select_all": "Select All",
+                "deselect_all": "Deselect All",
+                "save_options_label": "Save Options:",
+                "save_overwrite": "Overwrite original file",
+                "save_backup": "Backup original (add _origin)",
+                "save_prefix": "Add prefix...",
+                "save_suffix": "Add suffix...",
+                "save_output_folder": "Save to another folder",
+                "output_folder_placeholder": "Select destination folder...",
+                "affix_placeholder": "Enter prefix / suffix...",
+                "file_list_label": "Found Excel Files",
+                "run_button": "Run Selected Tasks",
+                "language_label": "Language:",
+                "tasks_dialog_title": "Select Tasks",
+                "tasks_dialog_label": "Please select tasks to run:",
+                "task_add_label": "Add Label",
+                "task_delete_hidden_sheets": "Delete Hidden Sheets (Safe)",
+                "task_delete_external_links": "Delete External Links",
+                "task_delete_defined_names": "Delete Defined Names (Safe)",
+                "task_set_print_settings": "Set Print Settings (A3, Landscape)",
+                "task_clear_excess_cell_formatting": "Clear Excess Cell Formatting",
+                "task_compress_all_images": "Compress All Images",
+                "task_refresh_and_clean_pivot_caches": "Clean Pivot Table Caches",
+                "task_compress_all_images_engine_label": "Image compression engine:",
+                "engine_xlwings": "xlwings",
+                "engine_spire": "Spire.Xls",
+                "image_max_size_kb": "Max Size (KB)",
+                "run_button_dialog": "Run",
+                "cancel_button_dialog": "Cancel",
+                "log_level_label": "Log Level:",
+                "log_level_info": "Info",
+                "log_level_debug": "Debug",
+            },
+            "ja": {
+                "window_title": "Excelツールキット",
+                "browse_placeholder": "Excelファイルを含むフォルダを選択...",
+                "browse_button": "参照...",
+                "select_all": "すべて選択",
+                "deselect_all": "選択解除",
+                "save_options_label": "保存オプション:",
+                "save_overwrite": "元のファイルを上書き",
+                "save_backup": "元のファイルをバックアップ (_originを追加)",
+                "save_prefix": "接頭辞を追加...",
+                "save_suffix": "接尾辞を追加...",
+                "save_output_folder": "別のフォルダに保存",
+                "output_folder_placeholder": "出力先フォルダを選択...",
+                "affix_placeholder": "接頭辞/接尾辞を入力...",
+                "file_list_label": "見つかったExcelファイル",
+                "run_button": "選択したタスクを実行",
+                "language_label": "言語:",
+                "tasks_dialog_title": "タスクを選択",
+                "tasks_dialog_label": "実行するタスクを選択してください：",
+                "task_add_label": "ラベルを追加",
+                "task_delete_hidden_sheets": "非表示シートを削除 (安全)",
+                "task_delete_external_links": "外部リンクを削除",
+                "task_delete_defined_names": "定義された名前を削除 (安全)",
+                "task_set_print_settings": "印刷設定 (A3, 横)",
+                "task_clear_excess_cell_formatting": "余分なセルの書式設定をクリア",
+                "task_compress_all_images": "すべての画像を圧縮",
+                "task_refresh_and_clean_pivot_caches": "ピボットテーブルキャッシュを整理",
+                "task_compress_all_images_engine_label": "画像圧縮エンジン:",
+                "engine_xlwings": "xlwings",
+                "engine_spire": "Spire.Xls",
+                "image_max_size_kb": "最大サイズ (KB)",
+                "run_button_dialog": "実行",
+                "cancel_button_dialog": "キャンセル",
+                "log_level_label": "ログレベル:",
+                "log_level_info": "情報 (Info)",
+                "log_level_debug": "デバッグ (Debug)",
+            }
+        }
+        self.lang_map = {"Tiếng Việt": "vi", "English": "en", "日本語": "ja"}
+        self.current_lang = "vi"
+
+    def set_language_by_name(self, lang_name):
+        """Đặt ngôn ngữ hiện tại dựa trên tên hiển thị."""
+        self.current_lang = self.lang_map.get(lang_name, "vi")
+
+    def get_text(self, key):
+        """Lấy văn bản dịch cho một khóa cụ thể."""
+        return self.language_data.get(self.current_lang, {}).get(key, key)
+
+# Tạo một instance duy nhất để sử dụng trong toàn bộ ứng dụng
+translator = Translator()
