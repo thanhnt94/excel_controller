@@ -1,8 +1,9 @@
 # Đường dẫn: excel_toolkit/main.py
-# Phiên bản 17.0 - Khắc phục tất cả các lỗi và tích hợp đầy đủ tùy chọn nén ảnh
+# Phiên bản 25.1 - Căn chỉnh lại tùy chọn lưu
 # Ngày cập nhật: 2025-09-15
 
 import customtkinter
+import tkinter as tk
 import tkinter.filedialog as filedialog
 import os
 import threading
@@ -47,6 +48,33 @@ customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("blue")
 _FILENAME_TRUNCATE_LIMIT = 30
 
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+
+    def show_tooltip(self, event):
+        if self.tooltip_window or not self.text:
+            return
+        x, y, _, _ = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 25
+        self.tooltip_window = tk.Toplevel(self.widget)
+        self.tooltip_window.wm_overrideredirect(True)
+        self.tooltip_window.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(self.tooltip_window, text=self.text, justify='left',
+                      background="#333333", foreground="white", relief='solid', borderwidth=1,
+                      font=("Segoe UI", 10, "normal"))
+        label.pack(ipadx=5, ipady=3)
+
+    def hide_tooltip(self, event):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+        self.tooltip_window = None
+
 class TaskSelectionDialog(customtkinter.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -54,26 +82,59 @@ class TaskSelectionDialog(customtkinter.CTkToplevel):
         self.tasks_vars, self.result = {}, []
         self.engine_var, self.quality_var = None, None
         
-        main_frame = customtkinter.CTkFrame(self); main_frame.pack(expand=True, fill="both", padx=20, pady=20)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        main_frame = customtkinter.CTkFrame(self)
+        main_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+        main_frame.grid_columnconfigure(0, weight=1)
         
         self.label = customtkinter.CTkLabel(main_frame, font=customtkinter.CTkFont(weight="bold"))
-        self.label.pack(pady=(0, 10), anchor="w")
+        self.label.grid(row=0, column=0, pady=(0, 10), sticky="w")
+
+        self.master_checkbox_var = customtkinter.StringVar(value="off")
+        self.master_checkbox = customtkinter.CTkCheckBox(main_frame, command=self.toggle_all_tasks, variable=self.master_checkbox_var, onvalue="on", offvalue="off")
+        self.master_checkbox.grid(row=1, column=0, padx=10, pady=(0, 5), sticky="w")
         
-        self.tasks_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
-        self.tasks_frame.pack(fill="both", expand=True)
+        self.tasks_container = customtkinter.CTkFrame(main_frame, fg_color="transparent")
+        self.tasks_container.grid(row=2, column=0, sticky="nsew")
+        self.tasks_container.grid_columnconfigure(0, weight=1)
 
         self.options_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
-        self.options_frame.pack(fill="x", pady=10, anchor="w")
+        self.options_frame.grid(row=3, column=0, pady=(5,0), sticky="ew")
 
         button_frame = customtkinter.CTkFrame(self, fg_color="transparent")
-        button_frame.pack(fill="x", padx=20, pady=(15, 20))
-        self.ok_button = customtkinter.CTkButton(button_frame, command=self.on_ok)
-        self.ok_button.pack(side="right", padx=(10, 0))
+        button_frame.grid(row=1, column=0, padx=20, pady=(0, 20), sticky="ew")
+        button_frame.grid_columnconfigure(0, weight=1)
         self.cancel_button = customtkinter.CTkButton(button_frame, fg_color="gray", command=self.on_cancel)
         self.cancel_button.pack(side="right")
+        self.ok_button = customtkinter.CTkButton(button_frame, command=self.on_ok)
+        self.ok_button.pack(side="right", padx=(0, 10))
+        
         self.update_text()
+        self.geometry("570x550")
         self.check_options_visibility()
 
+    def update_master_checkbox_state(self):
+        all_tasks = self.tasks_vars.values()
+        if not all_tasks: return
+        all_on = all(var.get() == "on" for var in all_tasks)
+        
+        if all_on:
+            self.master_checkbox.select()
+        else:
+            self.master_checkbox.deselect()
+
+    def toggle_all_tasks(self):
+        new_state = self.master_checkbox_var.get()
+        for var in self.tasks_vars.values():
+            var.set(new_state)
+        self.check_options_visibility()
+
+    def on_task_changed(self):
+        self.update_master_checkbox_state()
+        self.check_options_visibility()
+        
     def check_options_visibility(self, event=None):
         for widget in self.options_frame.winfo_children():
             widget.pack_forget()
@@ -81,56 +142,78 @@ class TaskSelectionDialog(customtkinter.CTkToplevel):
         if self.tasks_vars.get("compress_all_images", customtkinter.StringVar()).get() == "on":
             self.engine_label = customtkinter.CTkLabel(self.options_frame, text=translator.get_text("task_compress_all_images_engine_label"), font=customtkinter.CTkFont(weight="bold"))
             self.engine_label.pack(side="left", padx=(10, 5))
-            self.engine_var = customtkinter.StringVar(value=translator.get_text("engine_xlwings"))
-            self.engine_menu = customtkinter.CTkOptionMenu(self.options_frame, values=[translator.get_text("engine_xlwings"), translator.get_text("engine_spire")], variable=self.engine_var, command=self.update_compression_options)
+            self.engine_var = customtkinter.StringVar(value=translator.get_text("engine_pil"))
+            self.engine_menu = customtkinter.CTkOptionMenu(self.options_frame, values=[translator.get_text("engine_pil"), translator.get_text("engine_spire")], variable=self.engine_var, command=self.update_compression_options)
             self.engine_menu.pack(side="left")
 
             self.quality_label = customtkinter.CTkLabel(self.options_frame, text=f"DPI:", font=customtkinter.CTkFont(weight="bold"))
             self.quality_label.pack(side="left", padx=(15, 5))
-            self.quality_var = customtkinter.StringVar(value="220")
+            self.quality_var = customtkinter.StringVar(value="70")
             self.quality_entry = customtkinter.CTkEntry(self.options_frame, width=60, textvariable=self.quality_var)
             self.quality_entry.pack(side="left")
 
             self.update_compression_options(self.engine_var.get())
         
     def update_compression_options(self, choice):
-        if choice == translator.get_text("engine_xlwings"):
-            self.quality_label.configure(text="DPI:")
-            self.quality_entry.configure(placeholder_text="220")
-            self.quality_var.set("220")
+        if choice == translator.get_text("engine_pil"):
+            self.quality_label.configure(text="Chất lượng (1-95):")
+            self.quality_entry.configure(placeholder_text="70")
+            self.quality_var.set("70")
         elif choice == translator.get_text("engine_spire"):
             self.quality_label.configure(text=f"{translator.get_text('image_max_size_kb')}:")
             self.quality_entry.configure(placeholder_text="300")
             self.quality_var.set("300")
 
     def update_text(self):
-        self.title(translator.get_text("tasks_dialog_title")); self.geometry("400x400")
+        self.title(translator.get_text("tasks_dialog_title"))
         self.label.configure(text=translator.get_text("tasks_dialog_label"))
+        self.master_checkbox.configure(text=translator.get_text("select_deselect_all"))
         
-        for widget in self.tasks_frame.winfo_children(): widget.destroy()
-        tasks = {
-            "add_label": translator.get_text("task_add_label"),
-            "delete_hidden_sheets": translator.get_text("task_delete_hidden_sheets"),
-            "delete_external_links": translator.get_text("task_delete_external_links"),
-            "delete_defined_names": translator.get_text("task_delete_defined_names"),
-            "set_print_settings": translator.get_text("task_set_print_settings"),
-            "clear_excess_cell_formatting": translator.get_text("task_clear_excess_cell_formatting"),
-            "compress_all_images": translator.get_text("task_compress_all_images"),
-            "refresh_and_clean_pivot_caches": translator.get_text("task_refresh_and_clean_pivot_caches")
+        tasks_structure = {
+            "category_cleanup": {
+                "delete_hidden_sheets": translator.get_text("task_delete_hidden_sheets"),
+                "delete_external_links": translator.get_text("task_delete_external_links"),
+                "delete_defined_names": translator.get_text("task_delete_defined_names"),
+            },
+            "category_optimization": {
+                "clear_excess_cell_formatting": translator.get_text("task_clear_excess_cell_formatting"),
+                "compress_all_images": translator.get_text("task_compress_all_images"),
+                "refresh_and_clean_pivot_caches": translator.get_text("task_refresh_and_clean_pivot_caches"),
+            },
+            "category_utilities": {
+                "add_label": translator.get_text("task_add_label"),
+                "set_print_settings": translator.get_text("task_set_print_settings"),
+            }
         }
-        for task_id, task_name in tasks.items():
-            var = customtkinter.StringVar(value=self.tasks_vars.get(task_id, "off"))
-            cb = customtkinter.CTkCheckBox(self.tasks_frame, text=task_name, variable=var, onvalue="on", offvalue="off", command=self.check_options_visibility)
-            cb.pack(anchor="w", padx=10, pady=5)
-            self.tasks_vars[task_id] = var
-        self.tasks_vars.get("add_label", customtkinter.StringVar()).set("on")
+        
+        for widget in self.tasks_container.winfo_children(): widget.destroy()
+        self.tasks_vars = {} 
+
+        for cat_key, tasks in tasks_structure.items():
+            category_name = translator.get_text(cat_key)
+            
+            category_label = customtkinter.CTkLabel(self.tasks_container, text=category_name, font=customtkinter.CTkFont(weight="bold"), anchor="w")
+            category_label.pack(fill="x", padx=5, pady=(8, 0))
+
+            for task_id, task_name in tasks.items():
+                var = customtkinter.StringVar(value="off")
+                task_frame = customtkinter.CTkFrame(self.tasks_container, fg_color="transparent")
+                task_frame.pack(fill="x", padx=(20,0))
+                cb = customtkinter.CTkCheckBox(task_frame, text=task_name, variable=var, onvalue="on", offvalue="off", command=self.on_task_changed)
+                cb.pack(anchor="w", padx=10, pady=2)
+                self.tasks_vars[task_id] = var
+        
+        self.update_master_checkbox_state()
         self.ok_button.configure(text=translator.get_text("run_button_dialog"))
         self.cancel_button.configure(text=translator.get_text("cancel_button_dialog"))
+        
+        self.update_idletasks()
+        self.resizable(False, False)
 
     def on_ok(self): 
         self.result = [k for k, v in self.tasks_vars.items() if v.get() == "on"]
         if "compress_all_images" in self.result:
-            self.engine_var = self.engine_var.get()
+            self.engine_var = self.engine_menu.get()
             self.quality_var = self.quality_var.get()
         else:
             self.engine_var = None
@@ -148,7 +231,7 @@ class TaskSelectionDialog(customtkinter.CTkToplevel):
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("800x550")
+        self.geometry("550x550")
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1) 
@@ -173,13 +256,18 @@ class App(customtkinter.CTk):
 
         controls_frame = customtkinter.CTkFrame(files_frame, fg_color="transparent")
         controls_frame.grid(row=0, column=0, padx=10, pady=(5,0), sticky="ew")
-        self.select_all_button = customtkinter.CTkButton(controls_frame, width=120, command=self.select_all_files)
-        self.select_all_button.pack(side="left", padx=(0, 5))
-        self.deselect_all_button = customtkinter.CTkButton(controls_frame, width=120, command=self.deselect_all_files)
-        self.deselect_all_button.pack(side="left", padx=(0, 20))
-        self.save_label = customtkinter.CTkLabel(controls_frame)
+        
+        self.main_master_checkbox_var = customtkinter.StringVar(value="on")
+        self.main_master_checkbox = customtkinter.CTkCheckBox(controls_frame, command=self.toggle_all_files, variable=self.main_master_checkbox_var, onvalue="on", offvalue="off")
+        self.main_master_checkbox.pack(side="left")
+
+        # --- SỬA LỖI: Tạo frame riêng để căn phải ---
+        save_options_frame = customtkinter.CTkFrame(controls_frame, fg_color="transparent")
+        save_options_frame.pack(side="right")
+
+        self.save_label = customtkinter.CTkLabel(save_options_frame)
         self.save_label.pack(side="left", padx=(0,5))
-        self.save_option_menu = customtkinter.CTkOptionMenu(controls_frame, command=self.update_save_option_widgets)
+        self.save_option_menu = customtkinter.CTkOptionMenu(save_options_frame, command=self.update_save_option_widgets)
         self.save_option_menu.pack(side="left")
 
         self.option_widgets_frame = customtkinter.CTkFrame(files_frame, fg_color="transparent")
@@ -191,25 +279,28 @@ class App(customtkinter.CTk):
 
         self.file_scrollable_frame = customtkinter.CTkScrollableFrame(files_frame)
         self.file_scrollable_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
-        self.file_scrollable_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        self.file_scrollable_frame.grid_columnconfigure((0, 1), weight=1)
 
-        self.run_button = customtkinter.CTkButton(self.main_container, height=40, font=customtkinter.CTkFont(size=15, weight="bold"), command=self.run_tasks_event)
+        self.run_button = customtkinter.CTkButton(self.main_container, height=40, font=customtkinter.CTkFont(size=15, weight="bold"), command=self.run_tasks_event, fg_color="#27AE60", hover_color="#2ECC71")
         self.run_button.grid(row=2, column=0, padx=10, pady=15, sticky="ew")
         
         self.statusbar_frame = customtkinter.CTkFrame(self, height=30, corner_radius=0)
         self.statusbar_frame.grid(row=3, column=0, sticky="ew")
+        self.statusbar_frame.grid_columnconfigure(1, weight=1) 
+
+        statusbar_left_frame = customtkinter.CTkFrame(self.statusbar_frame, fg_color="transparent")
+        statusbar_left_frame.grid(row=0, column=0, sticky="w", padx=10)
+        self.lang_label = customtkinter.CTkLabel(statusbar_left_frame, font=customtkinter.CTkFont(size=10))
+        self.lang_label.pack(side="left", padx=(0, 5), pady=5)
+        self.lang_menu = customtkinter.CTkOptionMenu(statusbar_left_frame, values=["Tiếng Việt", "English", "日本語"], command=self.change_language)
+        self.lang_menu.pack(side="left", pady=5)
+        self.log_level_label = customtkinter.CTkLabel(statusbar_left_frame, font=customtkinter.CTkFont(size=10))
+        self.log_level_label.pack(side="left", padx=(10, 5), pady=5)
+        self.log_level_menu = customtkinter.CTkOptionMenu(statusbar_left_frame, command=self.change_log_level)
+        self.log_level_menu.pack(side="left", pady=5)
+
         self.copyright_label = customtkinter.CTkLabel(self.statusbar_frame, text="©KNT15083", font=customtkinter.CTkFont(size=10))
-        self.copyright_label.pack(side="right", padx=10, pady=5)
-        
-        self.lang_menu = customtkinter.CTkOptionMenu(self.statusbar_frame, values=["Tiếng Việt", "English", "日本語"], command=self.change_language)
-        self.lang_menu.pack(side="right", padx=10, pady=5)
-        self.lang_label = customtkinter.CTkLabel(self.statusbar_frame, font=customtkinter.CTkFont(size=10))
-        self.lang_label.pack(side="right", padx=(10, 5), pady=5)
-        
-        self.log_level_menu = customtkinter.CTkOptionMenu(self.statusbar_frame, command=self.change_log_level)
-        self.log_level_menu.pack(side="right", padx=10, pady=5)
-        self.log_level_label = customtkinter.CTkLabel(self.statusbar_frame, font=customtkinter.CTkFont(size=10))
-        self.log_level_label.pack(side="right", padx=(10, 5), pady=5)
+        self.copyright_label.grid(row=0, column=2, sticky="e", padx=10, pady=5)
 
         self.notifier = StatusNotifier(self)
         self.file_paths, self.file_checkboxes = [], []
@@ -227,6 +318,22 @@ class App(customtkinter.CTk):
         
         self.update_ui_text()
 
+    def update_main_master_checkbox_state(self):
+        if not self.file_checkboxes: return
+        all_on = all(cb.get() == 1 for cb in self.file_checkboxes)
+        if all_on:
+            self.main_master_checkbox.select()
+        else:
+            self.main_master_checkbox.deselect()
+
+    def toggle_all_files(self):
+        new_state_is_on = self.main_master_checkbox_var.get() == "on"
+        for checkbox in self.file_checkboxes:
+            if new_state_is_on:
+                checkbox.select()
+            else:
+                checkbox.deselect()
+
     def change_language(self, new_lang_name):
         translator.set_language_by_name(new_lang_name); self.update_ui_text()
 
@@ -242,8 +349,7 @@ class App(customtkinter.CTk):
         self.title(translator.get_text("window_title"))
         self.folder_path_entry.configure(placeholder_text=translator.get_text("browse_placeholder"))
         self.browse_button.configure(text=translator.get_text("browse_button"))
-        self.select_all_button.configure(text=translator.get_text("select_all"))
-        self.deselect_all_button.configure(text=translator.get_text("deselect_all"))
+        self.main_master_checkbox.configure(text=translator.get_text("select_deselect_all"))
         self.save_label.configure(text=translator.get_text("save_options_label"))
         
         save_options = [
@@ -301,22 +407,27 @@ class App(customtkinter.CTk):
     def update_file_list(self):
         self.clear_file_list()
         for i, file_path in enumerate(self.file_paths):
-            row, col = divmod(i, 4)
+            row, col = divmod(i, 2)
             base_name = os.path.basename(file_path)
             display_name = (base_name[:_FILENAME_TRUNCATE_LIMIT-3] + "...") if len(base_name) > _FILENAME_TRUNCATE_LIMIT else base_name
-            checkbox = customtkinter.CTkCheckBox(self.file_scrollable_frame, text=display_name)
-            checkbox.grid(row=row, column=col, padx=10, pady=5, sticky="w"); checkbox.select()
+            
+            cell_frame = customtkinter.CTkFrame(self.file_scrollable_frame, fg_color="transparent")
+            cell_frame.grid(row=row, column=col, padx=5, pady=2, sticky="ew")
+
+            checkbox = customtkinter.CTkCheckBox(cell_frame, text=display_name, command=self.update_main_master_checkbox_state)
+            checkbox.pack(side="left", padx=(5,0))
+            
             self.file_checkboxes.append(checkbox)
+            ToolTip(checkbox, text=file_path)
+            
+        self.main_master_checkbox.select()
+        self.toggle_all_files()
+        self.update_main_master_checkbox_state()
+
 
     def clear_file_list(self):
         for widget in self.file_scrollable_frame.winfo_children(): widget.destroy()
         self.file_checkboxes.clear()
-
-    def select_all_files(self):
-        for checkbox in self.file_checkboxes: checkbox.select()
-
-    def deselect_all_files(self):
-        for checkbox in self.file_checkboxes: checkbox.deselect()
 
     def run_tasks_event(self):
         selected_files = [self.file_paths[i] for i, cb in enumerate(self.file_checkboxes) if cb.get() == 1]
@@ -334,11 +445,18 @@ class App(customtkinter.CTk):
             save_details['affix'] = affix
 
         dialog = TaskSelectionDialog(self)
-        selected_tasks, selected_engine, quality_param = dialog.get_selected_tasks()
+        selected_tasks, selected_engine_text, quality_param = dialog.get_selected_tasks()
+        
+        engine = None
+        if selected_engine_text == translator.get_text("engine_pil"):
+            engine = "pil"
+        elif selected_engine_text == translator.get_text("engine_spire"):
+            engine = "spire"
+
         if not selected_tasks: self.log_message("Cancelled.", style="info", duration=0); return
             
         save_details['text'] = save_mode_text
-        self.process_files(selected_files, selected_tasks, selected_engine, quality_param, save_details)
+        self.process_files(selected_files, selected_tasks, engine, quality_param, save_details)
 
     def process_files(self, files, tasks, engine, quality_param, save_details):
         task_map = {
@@ -365,19 +483,28 @@ class App(customtkinter.CTk):
                 shutil.copy2(original_path, temp_path)
                 
                 is_file_processed_successfully = True
-                for task_id in tasks:
-                    task_name, task_func = task_map[task_id]
-                    self.log_message(f"File {i+1}/{total_files}\nRunning '{task_name}' on: {file_name}", style="info", duration=0)
+                
+                with ExcelController(visible=False, optimize_performance=True) as controller:
                     try:
-                        if task_id == "compress_all_images":
-                            quality_value = int(quality_param) if quality_param and quality_param.isdigit() else 220
-                            task_func(temp_path, engine, quality_value)
-                        else:
-                            task_func(temp_path)
+                        if not controller.open_workbook(temp_path):
+                            raise Exception(f"Could not open workbook: {file_name}")
+
+                        for task_id in tasks:
+                            task_name, task_func = task_map[task_id]
+                            self.log_message(f"File {i+1}/{total_files}\nRunning '{task_name}' on: {file_name}", style="info", duration=0)
+                            
+                            if task_id == "compress_all_images":
+                                quality_value = int(quality_param) if quality_param and quality_param.isdigit() else 70
+                                task_func(controller, temp_path, engine, quality_value)
+                            else:
+                                task_func(controller, temp_path)
+                        
+                        controller.save_workbook()
+
                     except Exception as e:
-                        self.log_message(f"ERROR: {task_name}\nFile: {file_name}\nDetails: {e}", style="error", duration=8)
-                        logging.exception(f"An exception occurred while processing {file_name} for task {task_name}")
-                        is_file_processed_successfully = False; break 
+                        self.log_message(f"ERROR processing file: {file_name}\nDetails: {e}", style="error", duration=8)
+                        logging.exception(f"An exception occurred while processing {file_name}")
+                        is_file_processed_successfully = False
                 
                 if is_file_processed_successfully:
                     try:
@@ -418,3 +545,4 @@ if __name__ == "__main__":
     setup_logging(logging.INFO)
     app = App()
     app.mainloop()
+
