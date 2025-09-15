@@ -1,5 +1,5 @@
 # Đường dẫn: excel_toolkit/excel_controller.py
-# Phiên bản: 4.6 - Khắc phục lỗi thiếu tham số file_path cho engine Spire
+# Phiên bản: 4.9 - Sửa lỗi logic gọi engine Spire
 # Ngày cập nhật: 2025-09-15
 
 import logging
@@ -8,7 +8,8 @@ import os
 
 from utils import (
     app_ops, cleanup_ops, convert_ops, data_ops, file_system_ops,
-    print_ops, range_ops, shape_ops, worksheet_ops, image_compressor_spire_api
+    print_ops, range_ops, shape_ops, worksheet_ops, 
+    compressor_engine_pil, compressor_engine_spire
 )
 
 class ExcelController:
@@ -105,7 +106,9 @@ class ExcelController:
         if not self.workbook:
             logging.warning("Không có workbook nào đang hoạt động để đóng."); return False
         try:
-            self.workbook.close(save_changes=save)
+            if save:
+                self.workbook.save()
+            self.workbook.close()
             logging.info("Đã đóng workbook."); self.workbook = None; return True
         except Exception as e:
             self.last_error = f"Lỗi khi đóng workbook: {e}"
@@ -203,26 +206,18 @@ class ExcelController:
         return shape_ops.delete_shape(self.workbook, sheet_name, shape_name)
     
     # Hàm nén ảnh tổng hợp, cho phép chọn engine
-    def compress_all_images(self, file_path, engine='xlwings', quality=220):
-        if engine == 'xlwings':
-            logging.info("Sử dụng engine 'xlwings' để nén ảnh.")
-            return shape_ops.compress_images_xlwings_method(self.workbook, quality_dpi=quality)
+    def compress_all_images(self, file_path, engine='pil', quality=70):
+        if engine == 'pil':
+            logging.info("Sử dụng engine 'Pillow' để nén ảnh.")
+            # Pillow engine cần workbook object
+            return compressor_engine_pil.compress_images(self.workbook, quality=quality)
         elif engine == 'spire':
             logging.info("Sử dụng engine 'Spire' để nén ảnh.")
-            return image_compressor_spire_api.compress_excel_with_spire_api(file_path, file_path, max_size_kb=quality)
+            # Spire engine cần đường dẫn file
+            # SỬA LỖI: Chỉ truyền một tham số đường dẫn
+            return compressor_engine_spire.compress_images(file_path, max_size_kb=quality)
         else:
-            logging.error(f"Engine nén ảnh '{engine}' không hợp lệ. Vui lòng chọn 'xlwings' hoặc 'spire'.")
-            return False
-
-    def compress_single_image(self, sheet_name, shape_name, engine='xlwings', quality=220):
-        if engine == 'xlwings':
-            logging.info(f"Sử dụng engine 'xlwings' để nén ảnh '{shape_name}'.")
-            return shape_ops.compress_single_image(self.workbook, sheet_name, shape_name, quality_dpi=quality)
-        elif engine == 'spire':
-            logging.info(f"Engine 'Spire' chưa hỗ trợ nén ảnh đơn lẻ. Bỏ qua.")
-            return False
-        else:
-            logging.error(f"Engine nén ảnh '{engine}' không hợp lệ. Vui lòng chọn 'xlwings' hoặc 'spire'.")
+            logging.error(f"Engine nén ảnh '{engine}' không hợp lệ. Vui lòng chọn 'pil' hoặc 'spire'.")
             return False
             
     # ======================================================================
@@ -265,3 +260,4 @@ class ExcelController:
         return convert_ops.sheet_to_pdf(self.workbook, sheet_name, output_path)
     def save_sheet_as_csv(self, sheet_name, output_path):
         return convert_ops.save_sheet_as_csv(self.workbook, sheet_name, output_path)
+
