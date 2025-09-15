@@ -1,5 +1,5 @@
 # Đường dẫn: excel_toolkit/localization.py
-# Phiên bản 2.4 - Bổ sung khóa dịch cho các tùy chọn nén ảnh
+# Phiên bản 2.6 - Bổ sung khóa dịch cho danh mục tác vụ
 # Ngày cập nhật: 2025-09-15
 
 class Translator:
@@ -11,6 +11,7 @@ class Translator:
                 "browse_button": "Duyệt...",
                 "select_all": "Chọn tất cả",
                 "deselect_all": "Bỏ chọn tất cả",
+                "select_deselect_all": "Chọn / Bỏ chọn tất cả",
                 "save_options_label": "Tùy chọn lưu:",
                 "save_overwrite": "Ghi đè file gốc",
                 "save_backup": "Sao lưu file gốc (thêm _origin)",
@@ -33,14 +34,17 @@ class Translator:
                 "task_compress_all_images": "Nén tất cả hình ảnh",
                 "task_refresh_and_clean_pivot_caches": "Dọn dẹp Pivot Table caches",
                 "task_compress_all_images_engine_label": "Engine nén ảnh:",
-                "engine_xlwings": "xlwings",
-                "engine_spire": "Spire.Xls",
+                "engine_pil": "Pillow (Chất lượng cao)",
+                "engine_spire": "Spire.Xls (Tốc độ & Ổn định)",
                 "image_max_size_kb": "Kích thước tối đa (KB)",
                 "run_button_dialog": "Chạy",
                 "cancel_button_dialog": "Hủy",
                 "log_level_label": "Mức độ Log:",
                 "log_level_info": "Thông tin (Info)",
                 "log_level_debug": "Gỡ lỗi (Debug)",
+                "category_cleanup": "Dọn dẹp & Sửa lỗi",
+                "category_optimization": "Tối ưu hóa dung lượng",
+                "category_utilities": "Định dạng & Tiện ích",
             },
             "en": {
                 "window_title": "Excel Toolkit",
@@ -48,6 +52,7 @@ class Translator:
                 "browse_button": "Browse...",
                 "select_all": "Select All",
                 "deselect_all": "Deselect All",
+                "select_deselect_all": "Select / Deselect All",
                 "save_options_label": "Save Options:",
                 "save_overwrite": "Overwrite original file",
                 "save_backup": "Backup original (add _origin)",
@@ -70,14 +75,17 @@ class Translator:
                 "task_compress_all_images": "Compress All Images",
                 "task_refresh_and_clean_pivot_caches": "Clean Pivot Table Caches",
                 "task_compress_all_images_engine_label": "Image compression engine:",
-                "engine_xlwings": "xlwings",
-                "engine_spire": "Spire.Xls",
+                "engine_pil": "Pillow (High Quality)",
+                "engine_spire": "Spire.Xls (Speed & Stability)",
                 "image_max_size_kb": "Max Size (KB)",
                 "run_button_dialog": "Run",
                 "cancel_button_dialog": "Cancel",
                 "log_level_label": "Log Level:",
                 "log_level_info": "Info",
                 "log_level_debug": "Debug",
+                "category_cleanup": "Cleanup & Fixes",
+                "category_optimization": "Size Optimization",
+                "category_utilities": "Formatting & Utilities",
             },
             "ja": {
                 "window_title": "Excelツールキット",
@@ -85,6 +93,7 @@ class Translator:
                 "browse_button": "参照...",
                 "select_all": "すべて選択",
                 "deselect_all": "選択解除",
+                "select_deselect_all": "すべて選択 / 選択解除",
                 "save_options_label": "保存オプション:",
                 "save_overwrite": "元のファイルを上書き",
                 "save_backup": "元のファイルをバックアップ (_originを追加)",
@@ -107,14 +116,17 @@ class Translator:
                 "task_compress_all_images": "すべての画像を圧縮",
                 "task_refresh_and_clean_pivot_caches": "ピボットテーブルキャッシュを整理",
                 "task_compress_all_images_engine_label": "画像圧縮エンジン:",
-                "engine_xlwings": "xlwings",
-                "engine_spire": "Spire.Xls",
+                "engine_pil": "Pillow (高品質)",
+                "engine_spire": "Spire.Xls (速度と安定性)",
                 "image_max_size_kb": "最大サイズ (KB)",
                 "run_button_dialog": "実行",
                 "cancel_button_dialog": "キャンセル",
                 "log_level_label": "ログレベル:",
                 "log_level_info": "情報 (Info)",
                 "log_level_debug": "デバッグ (Debug)",
+                "category_cleanup": "クリーンアップと修正",
+                "category_optimization": "サイズの最適化",
+                "category_utilities": "フォーマットとユーティリティ",
             }
         }
         self.lang_map = {"Tiếng Việt": "vi", "English": "en", "日本語": "ja"}
@@ -130,3 +142,4 @@ class Translator:
 
 # Tạo một instance duy nhất để sử dụng trong toàn bộ ứng dụng
 translator = Translator()
+
