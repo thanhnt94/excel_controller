@@ -1,0 +1,9 @@
+customtkinter
+xlwings
+Pillow
+pandas
+openpyxl
+spire.xls
+psutil
+pygetwindow
+pywin32
