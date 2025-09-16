@@ -1,5 +1,5 @@
 # Đường dẫn: excel_toolkit/utils/shape_ops.py
-# Phiên bản 5.8 - Thêm lại hàm nén ảnh cũ và tích hợp song song
+# Phiên bản 6.0 - Loại bỏ các hàm nén ảnh cũ, không hiệu quả
 # Ngày cập nhật: 2025-09-15
 
 import logging
@@ -155,88 +155,7 @@ def resize_shape(wb, sheet_name, shape_name, width, height):
         return False
 
 # ======================================================================
-# --- Nhóm 4: Tối ưu hóa (Hàm nén ảnh cũ) ---
-# ======================================================================
-
-def compress_images_xlwings_method(wb, quality_dpi=220):
-    """
-    Nén tất cả các hình ảnh trong workbook bằng phương pháp xlwings.
-    quality_dpi: 96 (Web/Screen), 150 (Email), 220 (Print).
-    """
-    logging.info(f"Bắt đầu nén ảnh (phương pháp xlwings) trong workbook '{wb.name}' với chất lượng {quality_dpi} DPI.")
-    compressed_count = 0
-    total_images_found = 0
-    msoPicture = 13 # Hằng số cho msoPicture
-    
-    # Bước 1: Đếm tổng số hình ảnh
-    for sheet in wb.sheets:
-        if sheet.api.Visible == -1:
-            for shape in sheet.shapes:
-                try:
-                    if shape.api.Type == msoPicture:
-                        total_images_found += 1
-                except Exception:
-                    pass
-
-    if total_images_found == 0:
-        logging.info("Không tìm thấy ảnh nào để nén.")
-        return True
-    
-    logging.info(f"Đã tìm thấy {total_images_found} ảnh. Bắt đầu quá trình nén...")
-
-    # Bước 2: Nén từng hình ảnh với xử lý lỗi chi tiết
-    try:
-        msoPictureCompressPrint = 1 # Hằng số cho chất lượng in
-        for sheet in wb.sheets:
-            if sheet.api.Visible == -1: # Chỉ xử lý sheet hiển thị
-                for shape in sheet.shapes:
-                    try:
-                        if shape.api.Type == msoPicture:
-                            logging.debug(f"  -> Đang xử lý ảnh '{shape.name}' trên sheet '{sheet.name}'.")
-                            shape.api.PictureFormat.CompressionType = msoPictureCompressPrint
-                            shape.api.PictureFormat.Resolution = quality_dpi
-                            logging.debug(f"  -> Đã nén thành công ảnh '{shape.name}'.")
-                            compressed_count += 1
-                        else:
-                            logging.debug(f"  -> Bỏ qua shape '{shape.name}' trên sheet '{sheet.name}' vì không phải là ảnh.")
-                    except Exception as e:
-                        logging.warning(f"Không thể nén ảnh '{shape.name}' trên sheet '{sheet.name}'. Có thể ảnh đã được nén hoặc không hỗ trợ. Lỗi: {e}")
-        
-        logging.info(f"Hoàn tất nén ảnh. Đã nén thành công {compressed_count} trên {total_images_found} ảnh.")
-        return True
-    except Exception as e:
-        logging.error(f"Lỗi nghiêm trọng trong quá trình nén ảnh: {e}")
-        return False
-        
-def compress_single_image(wb, sheet_name, shape_name, quality_dpi=220):
-    """
-    Nén một hình ảnh cụ thể trong workbook bằng phương pháp xlwings.
-    """
-    logging.debug(f"Bắt đầu nén ảnh '{shape_name}' trên sheet '{sheet_name}' bằng phương pháp xlwings...")
-    msoPictureCompressPrint = 1
-    msoPicture = 13
-    
-    try:
-        sheet = wb.sheets[sheet_name]
-        shape = sheet.shapes[shape_name]
-
-        if getattr(shape.api, 'Type', None) != msoPicture:
-            logging.warning(f"Shape '{shape_name}' không phải là một hình ảnh. Bỏ qua.")
-            return False
-
-        shape.api.PictureFormat.CompressionType = msoPictureCompressPrint
-        shape.api.PictureFormat.Resolution = quality_dpi
-        logging.info(f"Đã nén thành công ảnh '{shape_name}' trên sheet '{sheet_name}'.")
-        return True
-    except KeyError:
-        logging.error(f"Lỗi: Không tìm thấy sheet '{sheet_name}' hoặc shape '{shape_name}'.")
-        return False
-    except Exception as e:
-        logging.error(f"Lỗi khi nén ảnh '{shape_name}': {e}")
-        return False
-
-# ======================================================================
-# --- Nhóm 5: Xóa ---
+# --- Nhóm 4: Xóa ---
 # ======================================================================
 
 def delete_shape(wb, sheet_name, shape_name):
