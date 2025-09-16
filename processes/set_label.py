@@ -1,20 +1,19 @@
 # Đường dẫn: excel_toolkit/processes/set_label.py
-# Phiên bản 3.0 - Cập nhật để hoạt động với ExcelController đã mở sẵn
+# Phiên bản 4.0 - Nhận nội dung nhãn dán làm tham số
 # Ngày cập nhật: 2025-09-15
 
 import logging
 import os
 from excel_controller import ExcelController
 
-def run(controller, file_path):
+def run(controller, file_path, label_text='Nissan Confidential C'):
     """
     Quy trình chính: Thêm một nhãn tùy chỉnh vào tất cả các sheet đang
     hiển thị nếu nhãn đó chưa tồn tại.
     """
     shape_name = 'Alliance_Labeling'
-    label_text = 'Nissan Confidential C'
     
-    logging.info(f"Bắt đầu quy trình dán nhãn cho file: {os.path.basename(file_path)}")
+    logging.info(f"Bắt đầu quy trình dán nhãn '{label_text}' cho file: {os.path.basename(file_path)}")
     try:
         # Lấy danh sách sheet hiển thị trực tiếp từ controller
         visible_sheets, _ = controller.get_sheets_visibility()
